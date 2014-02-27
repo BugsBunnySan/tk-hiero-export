@@ -269,5 +269,6 @@ class ShotgunShotProcessorPreset(ShotgunHieroObjectBase, FnShotProcessor.ShotPro
         custom_template_fields = self.app.get_setting("custom_template_fields")
         for ctf in custom_template_fields:
             self.app.log_debug('Adding custom resolver %s' % ctf)
+            print 'Adding custom resolver %s' % ctf
             resolver.addResolver("{%s}" % ctf, "Shotgun Toolkit Custom Field.", 
-                                 lambda keyword, task: self._formatCustomString(keyword, task))
+                                 lambda keyword, task: self.app.execute_hook("hook_resolve_custom_strings", keyword=keyword, task=task))

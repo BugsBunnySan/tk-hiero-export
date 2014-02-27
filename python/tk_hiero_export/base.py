@@ -41,9 +41,6 @@ class ShotgunHieroObjectBase(object):
         tk_version_str = version_template.apply_fields({'version': int(hiero_version_str[1:])})
         return tk_version_str
 
-    def _formatCustomString(self, keyword, task):
-        self._app.execute_hook("hook_resolve_custom_strings", keyword=keyword, task=task)
-
     def _upload_thumbnail_to_sg(self, sg_entity, thumb_qimage):
         """
         Updates the thumbnail for an entity in Shotgun
