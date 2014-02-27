@@ -38,7 +38,7 @@ configuration:
       type: list
       allows_empty: True
       values:
-        type: string
+        type: str
 
     # hooks
     hook_translate_template:
@@ -80,7 +80,7 @@ configuration:
         parameters: [item, data]
         default_value: hiero_get_shot
 
-      hook_resolve_custom_strings:
+    hook_resolve_custom_strings:
         type: hook
         parameters: [keyword, task]
         default_value: hiero_resolve_custom_strings
