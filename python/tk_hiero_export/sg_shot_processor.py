@@ -265,3 +265,9 @@ class ShotgunShotProcessorPreset(ShotgunHieroObjectBase, FnShotProcessor.ShotPro
         self.app.log_debug('Adding custom resolver tk_version')
         resolver.addResolver("{tk_version}", "Version string formatted by Shotgun Toolkit.", 
                              lambda keyword, task: self._formatTkVersionString(task.versionString()))
+
+        custom_template_fields = self.app.get_setting("custom_template_fields")
+        for ctf in custom_template_fields:
+            self.app.log_debug('Adding custom resolver %s' % ctf)
+            resolver.addResolver("{%s}" % ctf, "Shotgun Toolkit Custom Field.", 
+                                 lambda keyword, task: self._formatCustomString(keyword, task))
