@@ -34,6 +34,11 @@ configuration:
                 name: { type: str }
         description:
 
+    custom_template_fields:
+      type: list
+      allows_empty: True
+      values:
+        type: string
 
     # hooks
     hook_translate_template:
@@ -74,6 +79,11 @@ configuration:
                      the shot via the sg_sequence field."
         parameters: [item, data]
         default_value: hiero_get_shot
+
+      hook_resolve_custom_strings:
+        type: hook
+        parameters: [keyword, task]
+        default_value: hiero_resolve_custom_strings
 
     # paths
     template_plate_path:
