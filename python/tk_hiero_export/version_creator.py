@@ -17,6 +17,7 @@ from PySide import QtGui
 from hiero.exporters import FnExternalRender
 from hiero.exporters import FnTranscodeExporter
 from hiero.exporters import FnTranscodeExporterUI
+from hiero.ui.FnUIProperty import *
 
 import tank
 import sgtk.util
