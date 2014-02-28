@@ -49,8 +49,26 @@ class ShotgunTranscodeExporterUI(ShotgunHieroObjectBase, FnTranscodeExporterUI.T
         # populate the middle with the standard layout
         FnTranscodeExporterUI.TranscodeExporterUI.populateUI(self, middle, exportTemplate)
 
-        layout = QtGui.QVBoxLayout(top)
+        tooltip = 'If enabled, mark this as a proxy for a specific task in this shot'
 
+        pt_layout = QtGui.QHBoxLayout(top)
+        self.proxyTaskCheckBox = QtGui.QCheckBox()
+        self.proxyTaskCheckBox.setToolTip(tooltip)
+        self.proxyTaskCheckBox.setText('Proxy for Task:')
+
+        uiProperty = UIPropertyFactory.create(type(""), key='proxyForTask', value=self._preset.properties()['proxyForTask'], dictionary=self._preset.properties(), label='Task name', tooltip='Specify Pipeline Step Name')
+        self._uiProperties.append(uiProperty)
+        
+        pt_layout.addWidget(self.proxyTaskCheckBox)
+        pt_layout.addWidget(uiProperty)
+
+        if self._preset.properties()['proxyForTaskEnabled']:
+            self.proxyTaskCheckBox.setCheckState(QtCore.Qt.Checked)
+
+        self.proxyTaskCheckBox.stateChanged.connect(self._proxyCheckBoxClicked)
+
+    def _proxyCheckBoxClicked(self, state):
+        self._preset.properties()['proxyForTaskEnabled'] = state == QtCore.Qt.Checked
 
 class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.TranscodeExporter, CollatingExporter):
     """
@@ -157,7 +175,30 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
         ################
         # by using entity instead of export path to get context, this ensures 
         # collated plates get linked to the hero shot
-        ctx = self.app.tank.context_from_entity('Shot', sg_shot['id'])
+       
+        sg_task = None
+        if self._preset.properties()['proxyForTaskEnabled']:
+            step_name = self._preset.properties()['proxyForTask']
+            sg_step   = sg.find_one("Step", [["code", "is", step_name]])
+            if sg_step is None:
+                raise Exception("Unknown Pipeline Step {step} specified for export of {path}".format(step=step_name, path=self._resolved_export_path))
+            sg_task = sg.find_one("Task", [["entity", "is", sg_shot], ["step", "is", sg_step]])
+            if sg_task is None:
+                task_data = {
+                    'entity' : sg_shot,
+                    'step'   : sg_step,
+                    'project': self.app.context.project,
+                }
+                sg_task = sg.create('Task', task_data)
+                self.parent.log_info("Created Task in Shotgun: %s" % task_data)
+            ctx = self.app.tank.context_from_entity('Task', sg_task['id'])
+            published_file_name = '{step}:{published_file_name}'.format(step=step_name,
+                                                                        published_file_name=published_file_name)
+        else:
+            ctx = self.app.tank.context_from_entity('Shot', sg_shot['id'])
+            published_file_name = os.path.basename(self._resolved_export_path)
+
+
         published_file_type = self.app.get_setting('plate_published_file_type')
 
         args = {
@@ -190,6 +231,8 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
             "sg_path_to_movie": self._resolved_export_path,
             "code": file_name,
         }
+        if sg_task:
+            data['sg_task'] = sg_task      
 
         published_file_entity_type = sgtk.util.get_published_file_entity_type(self.app.sgtk)
         if published_file_entity_type == "PublishedFile":
@@ -213,5 +256,12 @@ class ShotgunTranscodePreset(ShotgunHieroObjectBase, FnTranscodeExporter.Transco
         FnTranscodeExporter.TranscodePreset.__init__(self, name, properties)
         self._parentType = ShotgunTranscodeExporter
         CollatedShotPreset.__init__(self, self.properties())
+
+        if 'proxyForTaskEnabled' not in self.properties():
+            self.properties()['proxyForTaskEnabled'] = False
+        if 'proxyForTask' not in self.properties():
+            self.properties()['proxyForTask'] = ''
+
         self.properties().update(properties)
+
 

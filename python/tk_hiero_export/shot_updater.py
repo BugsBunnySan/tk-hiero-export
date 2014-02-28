@@ -48,6 +48,8 @@ class ShotgunShotUpdater(ShotgunHieroObjectBase, FnShotExporter.ShotTask, Collat
         # get cut info
         handles = self._cutHandles if self._cutHandles is not None else 0
         (head_in, tail_out) = self.collatedOutputRange(clampToSource=False)
+        source_in  = self._item.sourceIn()  - handles
+        source_out = self._item.sourceOut() + handles
         cut_in = head_in + handles
         cut_out = tail_out - handles
 
@@ -59,6 +61,8 @@ class ShotgunShotUpdater(ShotgunHieroObjectBase, FnShotExporter.ShotTask, Collat
         sg_shot["sg_tail_out"] = tail_out
         sg_shot["sg_cut_duration"] = cut_out - cut_in + 1
         sg_shot["sg_working_duration"] = tail_out - head_in + 1
+        sg_shot["sg_source_in"]        = int(source_in)
+        sg_shot["sg_source_out"]       = int(source_out)
 
         # get status from the hiero tags
         status = None
