@@ -18,8 +18,6 @@ import shutil
 import tempfile
 import traceback
 
-from PySide import QtCore
-
 from tank.platform import Application
 
 from tank import TankError

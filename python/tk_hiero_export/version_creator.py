@@ -12,7 +12,7 @@ import os
 import shutil
 import tempfile
 
-from PySide import QtGui
+from PySide import QtGui, QtCore
 
 from hiero.exporters import FnExternalRender
 from hiero.exporters import FnTranscodeExporter
