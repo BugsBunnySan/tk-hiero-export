@@ -68,8 +68,6 @@ class HieroExport(Application):
         # register our app with the base class that all custom hiero objects derive from.
         ShotgunHieroObjectBase.setApp(self)
 
-
-
         hiero.core.taskRegistry.registerTask(ShotgunShotUpdaterPreset, ShotgunShotUpdater)
         hiero.core.taskRegistry.registerTask(ShotgunTranscodePreset, ShotgunTranscodeExporter)
         hiero.core.taskRegistry.registerTask(ShotgunNukeShotPreset, ShotgunNukeShotExporter)

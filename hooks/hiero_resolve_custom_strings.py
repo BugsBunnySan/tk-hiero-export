@@ -1,50 +1,50 @@
+# Copyright (c) 2014 Shotgun Software Inc.
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
+
 from tank import Hook
 
+
 class HieroResolveCustomStrings(Hook):
-    _sg_lookup_cache = {'Sequence': {},
-                        'Scene'   : {},
-                        'Shot'    : {}}
-
-    def _formatSequenceString(self, keyword, task, sg_shot):
-        sg_sequence = None
-        if sg_shot['sg_sequence']['id'] not in HieroResolveCustomStrings._sg_lookup_cache['Sequence']:
-            sg_sequence = self.parent.shotgun.find_one('Sequence', [['id', 'is', sg_shot['sg_sequence']['id']]], fields=['code'])
-            if not sg_sequence:
-                return ''
-            HieroResolveCustomStrings._sg_lookup_cache['Sequence'][sg_shot['sg_sequence']['id']] = sg_sequence
-        else:
-            sg_sequence = HieroResolveCustomStrings._sg_lookup_cache['Sequence'][sg_shot['sg_sequence']['id']]
-        return sg_sequence['code']
-        
-    def _formatSceneString(self, keyword, task, sg_shot):
-        sg_scene = None
-        if sg_shot['sg_scene']['id'] not in HieroResolveCustomStrings._sg_lookup_cache['Scene']:
-            sg_scene = self.parent.shotgun.find_one('Scene', [['id', 'is', sg_shot['sg_scene']['id']]], fields=['code'])
-            if not sg_scene:
-                return ''
-            HieroResolveCustomStrings._sg_lookup_cache['Scene'][sg_shot['sg_scene']['id']] = sg_scene
-        else:
-            sg_scene = HieroResolveCustomStrings._sg_lookup_cache['Scene'][sg_shot['sg_scene']['id']]
-        return sg_scene['code']        
-
-    def _formatShotNoString(self, keyword, task, sg_shot):
-        return sg_shot['sg_shot_no']
-
+    """Translates a keyword string into its resolved value for a given task."""
+    # cache of shots that have already been pulled from shotgun
+    _sg_lookup_cache = {}
 
     def execute(self, task, keyword, **kwargs):
-        lookup_key = task._item.name()
-        if lookup_key in HieroResolveCustomStrings._sg_lookup_cache['Shot']:
-            sg_shot = HieroResolveCustomStrings._sg_lookup_cache['Shot'][lookup_key]
-        else:
-            sg_shot = self.parent.shotgun.find_one("Shot", [['code', 'is', task._item.name()]], self.parent.get_setting("custom_template_fields"))
-            HieroResolveCustomStrings._sg_lookup_cache['Shot'][lookup_key] = sg_shot
-        if not sg_shot:
-            return ''            
-        if keyword == '{sg_sequence}':
-            return self._formatSequenceString(keyword, task, sg_shot)
-        elif keyword == '{sg_scene}':
-            return self._formatSceneString(keyword, task, sg_shot)
-        elif keyword == '{sg_shot_no}':
-            return self._formatShotNoString(keyword, task, sg_shot)
-        else:
-            return ''
+        """
+        The default implementation of the custom resolver simply looks up
+        the keyword from the shotgun shot dictionary.
+
+        For example, to pull the shot code, you would simply specify 'code'.
+        To pull the sequence code you would use 'sg_sequence.Sequence.code'.
+        """
+        shot_code = task._item.name()
+
+        # grab the shot from the cache, or from Shotgun if it is not cached
+        sg_shot = self._sg_lookup_cache.get(shot_code)
+        if sg_shot is None:
+            fields = [ctf['keyword'] for ctf in self.parent.get_setting('custom_template_fields')]
+            sg_shot = self.parent.shotgun.find_one(
+                "Shot",
+                [['code', 'is', shot_code], ['project', 'is', self.parent.context.project]],
+                fields,
+            )
+
+            self._sg_lookup_cache[shot_code] = sg_shot
+
+        if sg_shot is None:
+            raise RuntimeError("Could not find shot for custom resolver: %s" % shot_code)
+
+        # strip off the leading and trailing curly brackets
+        keyword = keyword[1:-1]
+        result = sg_shot.get(keyword, '')
+
+        self.parent.log_debug("Custom resolver: %s[%s] -> %s" % (shot_code, keyword, result))
+
+        return result
