@@ -7,6 +7,8 @@ class HieroResolveCustomStrings(Hook):
 
     def _formatSequenceString(self, keyword, task, sg_shot):
         sg_sequence = None
+        if not sg_shot['sg_sequence']:
+            return ''
         if sg_shot['sg_sequence']['id'] not in HieroResolveCustomStrings._sg_lookup_cache['Sequence']:
             sg_sequence = self.parent.shotgun.find_one('Sequence', [['id', 'is', sg_shot['sg_sequence']['id']]], fields=['code'])
             if not sg_sequence:
@@ -18,6 +20,8 @@ class HieroResolveCustomStrings(Hook):
         
     def _formatSceneString(self, keyword, task, sg_shot):
         sg_scene = None
+        if not sg_shot['sg_scene']:
+            return ''
         if sg_shot['sg_scene']['id'] not in HieroResolveCustomStrings._sg_lookup_cache['Scene']:
             sg_scene = self.parent.shotgun.find_one('Scene', [['id', 'is', sg_shot['sg_scene']['id']]], fields=['code'])
             if not sg_scene:
