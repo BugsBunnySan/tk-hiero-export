@@ -36,9 +36,16 @@ configuration:
 
     custom_template_fields:
       type: list
+      description: "A list of custom strings to add to Hiero's resolver.
+                   Each item needs to be translated to a resolved string
+                   by the resolve custom strings hook."
       allows_empty: True
       values:
-        type: str
+        type: dict
+        items:
+            keyword: { type: str }
+            description: { type: str }
+      default_value: []
 
     # hooks
     hook_translate_template:
@@ -82,6 +89,12 @@ configuration:
 
     hook_resolve_custom_strings:
         type: hook
+        description: "Called when resolving custom items added to the Hiero resolver
+                      via the custom_template_fields setting.  The first argument is
+                      the keyword being resolved and the second argument is the Hiero
+                      task being run.
+
+                      The return value is the resolved string value for the keyword."
         parameters: [keyword, task]
         default_value: hiero_resolve_custom_strings
 
