@@ -99,30 +99,30 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
             self._temp_quicktime = False
             return
 
-        self._quicktime_path = os.path.join(tempfile.mkdtemp(), 'preview.mov')
-        self._temp_quicktime = True
-        nodeName = "Shotgun Screening Room Media"
+        #self._quicktime_path = os.path.join(tempfile.mkdtemp(), 'preview.mov')
+        #self._temp_quicktime = True
+        #nodeName = "Shotgun Screening Room Media"
 
-        framerate = None
-        if self._sequence:
-            framerate = self._sequence.framerate()
-        if self._clip.framerate().isValid():
-            framerate = self._clip.framerate()
+        #framerate = None
+        #if self._sequence:
+        #    framerate = self._sequence.framerate()
+        #if self._clip.framerate().isValid():
+        #    framerate = self._clip.framerate()
 
-        preset = FnTranscodeExporter.TranscodePreset("Qt Write", self._preset.properties())
-        preset.properties().update({
-            'file_type': u'mov',
-            'mov': {
-                'codec': 'avc1\tH.264',
-                'quality': 3,
-                'settingsString': 'H.264, High Quality',
-                'keyframerate': 1,
-            }
-        })
-        movWriteNode = FnExternalRender.createWriteNode(self._quicktime_path,
-            preset, nodeName, framerate=framerate, projectsettings=self._projectSettings)
+        #preset = FnTranscodeExporter.TranscodePreset("Qt Write", self._preset.properties())
+        #preset.properties().update({
+        #    'file_type': u'mov',
+        #    'mov': {
+        #        'codec': 'avc1\tH.264',
+        #        'quality': 3,
+        #        'settingsString': 'H.264, High Quality',
+        #        'keyframerate': 1,
+        #    }
+        #})
+        #movWriteNode = FnExternalRender.createWriteNode(self._quicktime_path,
+        #    preset, nodeName, framerate=framerate, projectsettings=self._projectSettings)
 
-        self._script.addNode(movWriteNode)
+        #self._script.addNode(movWriteNode)
 
     def sequenceName(self):
         """override default sequenceName() to handle collated shots"""
@@ -178,6 +178,7 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
         # collated plates get linked to the hero shot
        
         sg_task = None
+        published_file_name = os.path.basename(self._resolved_export_path)
         if self._preset.properties()['proxyForTaskEnabled']:
             step_name = self._preset.properties()['proxyForTask']
             sg_step   = sg.find_one("Step", [["code", "is", step_name]])
@@ -197,8 +198,6 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
                                                                         published_file_name=published_file_name)
         else:
             ctx = self.app.tank.context_from_entity('Shot', sg_shot['id'])
-            published_file_name = os.path.basename(self._resolved_export_path)
-
 
         published_file_type = self.app.get_setting('plate_published_file_type')
 
@@ -206,7 +205,7 @@ class ShotgunTranscodeExporter(ShotgunHieroObjectBase, FnTranscodeExporter.Trans
             "tk": self.app.tank,
             "context": ctx,
             "path": self._resolved_export_path,
-            "name": os.path.basename(self._resolved_export_path),
+            "name": published_file_name,
             "version_number": int(self._tk_version),
             "published_file_type": published_file_type,
         }
